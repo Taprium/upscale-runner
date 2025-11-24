@@ -28,7 +28,8 @@ RUN pip install pocketbase filelock
 RUN apk update && apk add vulkan-loader libgomp libgcc
 
 ARG TARGETARCH
-RUN RUN if [ "$TARGETARCH" == "amd64" ]; then \
+
+RUN if [ "$TARGETARCH" == "amd64" ]; then \
     apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
     apk search -eq '*-vulkan-*'| xargs apk add; \
