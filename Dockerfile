@@ -31,11 +31,15 @@ RUN cat /etc/apk/repositories
 ARG TARGETARCH
 
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
+    # uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
+    apk search mesa-vulkan; \
+    # uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
-    apk add --no-cache --force-architecture --allow-untrusted mesa-vulkan-asahi; \
+    apk search mesa-vulkan; \
+    # apk add --no-cache --force-architecture --allow-untrusted mesa-vulkan-asahi; \
     elif [ "$TARGETARCH" = "arm" ]; then \
-    uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
+    apk search mesa-vulkan; \
+    # uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     fi
 
 RUN rm -rf /var/cache/apk/*
