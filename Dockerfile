@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM python:alpine
+FROM python:alpine
 
 RUN apk update && apk add wget unzip
 
@@ -19,7 +19,7 @@ RUN if [ "$TARGETARCH" == "amd64" ]; then \
     wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm32 -O realesrgan-ncnn-vulkan; \
     fi
 
-FROM --platform=$BUILDPLATFORM python:alpine
+FROM python:alpine
 
 WORKDIR /app
 
