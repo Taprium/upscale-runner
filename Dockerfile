@@ -1,5 +1,5 @@
 FROM --platform=$BUILDPLATFORM python:alpine
-
+ARG BUILDPLATFORM
 RUN echo "$BUILDPLATFORM"
 RUN apk update && apk add wget unzip
 
