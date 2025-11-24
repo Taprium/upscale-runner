@@ -9,7 +9,6 @@ RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/reale
     unzip realesrgan-ncnn-vulkan-20220424-ubuntu.zip && rm realesrgan-ncnn-vulkan
 
 ARG TARGETARCH
-ARG TARGETPLATFORM
 
 # Download realesrgan-vulkan-ncnn executable binaries
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
@@ -28,6 +27,7 @@ RUN pip install pocketbase filelock
 
 RUN apk update && apk add vulkan-loader libgomp libgcc
 
+ARG TARGETARCH
 RUN RUN if [ "$TARGETARCH" == "amd64" ]; then \
     apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
