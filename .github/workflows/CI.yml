@@ -33,12 +33,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: . 
-          push: false
+          push: true
           # The single tag that will contain the manifest list
           tags: taprium/upscale-runner:${{ github.ref_name }} 
           # Specify all desired architectures
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          # # Pass the TARGETARCH variable to the Dockerfile
-          # build-args: |
-          #   TARGETARCH=
-          #   TARGETPLATFORM=
