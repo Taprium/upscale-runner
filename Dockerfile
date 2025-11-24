@@ -30,11 +30,11 @@ RUN apk update && apk add vulkan-loader libgomp libgcc
 ARG TARGETARCH
 
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
-    apk search -eq '*-vulkan-*'| xargs apk add; \
+    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
-    apk search -eq '*-vulkan-*'| xargs apk add; \
+    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm" ]; then \
-    apk search -eq '*-vulkan-*'| xargs apk add; \
+    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     fi
 
 COPY crontab.txt ./
