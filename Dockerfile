@@ -30,11 +30,11 @@ RUN apk update && apk add vulkan-loader libgomp libgcc
 ARG TARGETARCH
 
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
-    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
+    uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
-    apk update && apk search -eq '*-vulkan-*'| xargs apk add && apk add mesa-vulkan-asahi; \
+    uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm" ]; then \
-    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
+    uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     fi
 
 RUN rm -rf /var/cache/apk/*
