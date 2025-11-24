@@ -1,4 +1,6 @@
-FROM python:alpine
+ARG TARGETARCH
+
+FROM --platform=$BUILDPLATFORM python:alpine
 
 RUN apk update && apk add wget unzip
 
@@ -7,8 +9,6 @@ WORKDIR /src
 # download models
 RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip && \
     unzip realesrgan-ncnn-vulkan-20220424-ubuntu.zip && rm realesrgan-ncnn-vulkan
-
-ARG TARGETARCH
 
 # Download realesrgan-vulkan-ncnn executable binaries
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
@@ -19,7 +19,7 @@ RUN if [ "$TARGETARCH" == "amd64" ]; then \
     wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm32 -O realesrgan-ncnn-vulkan; \
     fi
 
-FROM python:alpine
+FROM --platform=$BUILDPLATFORM python:alpine
 
 WORKDIR /app
 
