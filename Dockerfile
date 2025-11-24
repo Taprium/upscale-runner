@@ -26,7 +26,15 @@ WORKDIR /app
 
 RUN pip install pocketbase filelock
 
-RUN apk update && apk search -eq '*-vulkan-*'| xargs apk add && apk add vulkan-loader libgomp libgcc
+RUN apk update && apk add vulkan-loader libgomp libgcc
+
+RUN RUN if [ "$TARGETARCH" == "amd64" ]; then \
+    apk search -eq '*-vulkan-*'| xargs apk add; \
+    elif [ "$TARGETARCH" == "arm64" ]; then \
+    apk search -eq '*-vulkan-*'| xargs apk add; \
+    elif [ "$TARGETARCH" == "arm" ]; then \
+    apk search -eq '*-vulkan-*'| xargs apk add; \
+    fi
 
 COPY crontab.txt ./
 COPY --from=0 /src/realesrgan-ncnn-vulkan ./
