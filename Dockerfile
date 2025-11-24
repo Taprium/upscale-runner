@@ -1,6 +1,3 @@
-ARG TARGETARCH
-ARG TARGETPLATFORM
-
 FROM --platform=$BUILDPLATFORM python:alpine
 
 RUN apk update && apk add wget unzip
@@ -13,9 +10,6 @@ RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/reale
 
 ARG TARGETARCH
 ARG TARGETPLATFORM
-
-RUN echo $TARGETPLATFORM
-RUN echo $TARGETARCH
 
 # Download realesrgan-vulkan-ncnn executable binaries
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
