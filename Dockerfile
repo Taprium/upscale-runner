@@ -26,6 +26,7 @@ WORKDIR /app
 RUN pip install pocketbase filelock
 
 RUN apk update && apk add vulkan-loader libgomp libgcc
+RUN cat /etc/apk/repositories
 
 ARG TARGETARCH
 
