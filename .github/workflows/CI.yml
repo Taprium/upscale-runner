@@ -41,3 +41,4 @@ jobs:
           # Pass the TARGETARCH variable to the Dockerfile
           build-args: |
             TARGETARCH=
+            TARGETPLATFORM=
