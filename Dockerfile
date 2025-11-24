@@ -1,4 +1,5 @@
 ARG TARGETARCH
+ARG TARGETPLATFORM
 
 FROM --platform=$BUILDPLATFORM python:alpine
 
