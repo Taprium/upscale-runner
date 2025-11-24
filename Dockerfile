@@ -1,6 +1,5 @@
 FROM --platform=$BUILDPLATFORM python:alpine
-ARG BUILDPLATFORM
-RUN echo "$BUILDPLATFORM"
+
 RUN apk update && apk add wget unzip
 
 WORKDIR /src
@@ -34,7 +33,7 @@ ARG TARGETARCH
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
     uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
-    apk update && apk add mesa-vulkan-swrast && apk add mesa-vulkan-freedreno && apk add mesa-vulkan-broadcom && apk add mesa-vulkan-asahi && apk add mesa-vulkan-panfrost; \
+    apk add --no-cache --force-architecture --allow-untrusted mesa-vulkan-asahi; \
     elif [ "$TARGETARCH" == "arm" ]; then \
     uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     fi
