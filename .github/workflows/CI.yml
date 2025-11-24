@@ -38,7 +38,7 @@ jobs:
           tags: taprium/upscale-runner:${{ github.ref_name }} 
           # Specify all desired architectures
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          # Pass the TARGETARCH variable to the Dockerfile
-          build-args: |
-            TARGETARCH=
-            TARGETPLATFORM=
+          # # Pass the TARGETARCH variable to the Dockerfile
+          # build-args: |
+          #   TARGETARCH=
+          #   TARGETPLATFORM=
