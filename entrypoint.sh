@@ -1,1 +1,1 @@
-printenv > /etc/environment && service cron start && tail -f /var/log/taprium-upscale-runner.log
+printenv > /etc/environment && crond && tail -f /var/log/taprium-upscale-runner.log
