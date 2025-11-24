@@ -32,7 +32,7 @@ ARG TARGETARCH
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
     uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
-    uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
+    apk add mesa-vulkan-swrast && apk add mesa-vulkan-freedreno && apk add mesa-vulkan-broadcom && apk add mesa-vulkan-asahi && apk add mesa-vulkan-panfrost; \
     elif [ "$TARGETARCH" == "arm" ]; then \
     uname -m && apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
     fi
