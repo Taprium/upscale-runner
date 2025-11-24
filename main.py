@@ -11,10 +11,16 @@ pb_user = pb.collection("upscale_runners").auth_with_password(os.environ["PB_USE
 
 PB_COLLECTION_IMAGE = "generated_images"
 
+do_upscale = True
+
 def upscale():
-    to_upscale_record = pb.collection(PB_COLLECTION_IMAGE).get_first_list_item("selected=true && upscaled=false && runner=''",{
-        "sort": "@random"
-    })
+    global do_upscale
+    try:
+        to_upscale_record = pb.collection(PB_COLLECTION_IMAGE).get_first_list_item("selected=true && upscaled=false && runner=''",{
+            "sort": "@random"
+        })
+    except:
+        do_upscale = False
     # if no record found, will throw exception, and exit
     
     # lock the runner
@@ -41,6 +47,7 @@ def upscale():
     })
     os.remove(origin_file)
     os.remove(upscaled_file_name)
+    do_upscale=False
 
 if __name__ == '__main__':
     lock = FileLock('/var/lock/run.lock')
@@ -50,10 +57,11 @@ if __name__ == '__main__':
         print("Another upscale process is running.")
         exit()
 
-    try:
-        upscale()
-    except:
-        exit()
+    while do_upscale:
+        try:
+            upscale()
+        except:
+            exit()
     
     lock.release()
     
