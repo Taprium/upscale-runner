@@ -50,4 +50,4 @@ COPY *.sh ./
 
 RUN chmod +x /app/realesrgan-ncnn-vulkan 
 
-CMD [ "bash", "entrypoint.sh"]
+CMD [ "sh", "entrypoint.sh"]
