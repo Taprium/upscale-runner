@@ -30,15 +30,8 @@ RUN cat /etc/apk/repositories
 
 ARG TARGETARCH
 
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
-    elif [ "$TARGETARCH" = "arm64" ]; then \
-    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
-    elif [ "$TARGETARCH" = "arm" ]; then \
-    apk update && apk search -eq '*-vulkan-*'| xargs apk add; \
-    fi
+RUN apk update && apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add && rm -rf /var/cache/apk/*
 
-RUN rm -rf /var/cache/apk/*
 COPY crontab.txt ./
 COPY --from=0 /src/realesrgan-ncnn-vulkan ./
 COPY --from=0 /src/models/* ./models/
