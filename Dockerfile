@@ -1,46 +1,39 @@
-FROM python:alpine
+FROM python:alpine AS downloader
 
-RUN apk update && apk add wget unzip
+RUN apk add --no-cache wget unzip
 
 WORKDIR /src
 
 # download models
 RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip && \
-    unzip realesrgan-ncnn-vulkan-20220424-ubuntu.zip && rm realesrgan-ncnn-vulkan
+    unzip realesrgan-ncnn-vulkan-20220424-ubuntu.zip && rm *.mp4 *.jpg realesrgan*
 
 ARG TARGETARCH
 
 # Download realesrgan-vulkan-ncnn executable binaries
 RUN if [ "$TARGETARCH" == "amd64" ]; then \
-    wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-x64 -O realesrgan-ncnn-vulkan; \
+        wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-x64 -O realesrgan-ncnn-vulkan; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
-    wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm64 -O realesrgan-ncnn-vulkan; \
+        wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm64 -O realesrgan-ncnn-vulkan; \
     elif [ "$TARGETARCH" == "arm" ]; then \
-    wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm32 -O realesrgan-ncnn-vulkan; \
+        wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm32 -O realesrgan-ncnn-vulkan; \
     fi
 
 FROM python:alpine
 
 WORKDIR /app
 
+RUN apk update && \
+    apk add --no-cache vulkan-loader libgomp libgcc && \
+    apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add --no-cache &&\
+    rm -rf /var/cache/apk/*
+
 RUN pip install pocketbase filelock
 
-RUN apk update && apk add vulkan-loader libgomp libgcc
-RUN cat /etc/apk/repositories
+COPY crontab.txt *.py *.sh ./
+COPY --from=downloader /src/realesrgan-ncnn-vulkan ./
+COPY --from=downloader /src/models/* ./models/
 
-ARG TARGETARCH
-
-RUN apk update && apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add && rm -rf /var/cache/apk/*
-
-COPY crontab.txt ./
-COPY --from=0 /src/realesrgan-ncnn-vulkan ./
-COPY --from=0 /src/models/* ./models/
-
-RUN crontab crontab.txt && touch /var/log/taprium-upscale-runner.log
-
-COPY *.py ./
-COPY *.sh ./
-
-RUN chmod +x /app/realesrgan-ncnn-vulkan 
+RUN crontab crontab.txt && touch /var/log/taprium-upscale-runner.log && rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan
 
 CMD [ "sh", "entrypoint.sh"]
