@@ -10,34 +10,46 @@ pb = PocketBase(os.environ["PB_ADDR"])
 pb_user = pb.collection("upscale_runners").auth_with_password(os.environ["PB_USER"],os.environ["PB_PASSWORD"])
 
 PB_COLLECTION_IMAGE = "generated_images"
+PB_COLLECTION_SETTINGS = "settings"
 
 do_upscale = True
 
 def upscale():
     global do_upscale
+    
     try:
         to_upscale_record = pb.collection(PB_COLLECTION_IMAGE).get_first_list_item("selected=true && upscaled=false && runner=''",{
-            "sort": "@random"
+            "sort": "@random",
+            'expand': 'queue'
         })
     except:
+        # if no record found, will throw exception, and exit
         do_upscale = False
-    # if no record found, will throw exception, and exit
-    
+        return
+
     # lock the runner
     pb.collection(PB_COLLECTION_IMAGE).update(to_upscale_record.id,body_params={
         "runner": pb_user.record.id
     })
     
+    settings_record = pb.collection(PB_COLLECTION_SETTINGS).get_first_list_item('')
+    queue_record = to_upscale_record.expand['queue']
+    
     file_url = '{pb_host}/api/files/generated_images/{id}/{file}'.format(pb_host=pb.base_url,id=to_upscale_record.id,file=to_upscale_record.image)
     origin_file = 'to-upscale.png'
     upscaled_file_name = '{}.png'.format(to_upscale_record.id)
     urllib.request.urlretrieve(urllib.parse.urlparse(file_url).geturl(), origin_file)
-    subprocess.run([
-        "./realesrgan-ncnn-vulkan", 
-        "-s","2",
-        "-i", origin_file, 
-        "-o", upscaled_file_name
-    ], check=True)
+    try:
+        subprocess.run([
+            "./realesrgan-ncnn-vulkan", 
+            "-s", str(queue_record.upscale_times),
+            "-n", settings_record.upscale_model,
+            "-i", origin_file, 
+            "-o", upscaled_file_name
+        ], check=True)
+    except Exception as e:
+        print(e)
+        
     pb.collection(PB_COLLECTION_IMAGE).update(to_upscale_record.id,{
         'image':''
     })
@@ -47,6 +59,7 @@ def upscale():
     })
     os.remove(origin_file)
     os.remove(upscaled_file_name)
+    print("Upscale image [{}] finished".format(to_upscale_record.id))
     do_upscale=False
 
 if __name__ == '__main__':
