@@ -27,7 +27,7 @@ def upscale():
         do_upscale = False
         return
 
-    # lock the runner
+    # lock the runner, if the lock failed, will throw exception, and run this function again
     pb.collection(PB_COLLECTION_IMAGE).update(to_upscale_record.id,body_params={
         "runner": pb_user.record.id
     })
@@ -60,7 +60,8 @@ def upscale():
     os.remove(origin_file)
     os.remove(upscaled_file_name)
     print("Upscale image [{}] finished".format(to_upscale_record.id))
-    do_upscale=False
+    # by not setting do_upscale=False at the function end, the loop in main will execute upscale function again
+    # do_upscale=False
 
 if __name__ == '__main__':
     lock = FileLock('/var/lock/run.lock')
