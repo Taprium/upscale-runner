@@ -49,7 +49,12 @@ def upscale():
             "-o", upscaled_file_name
         ], check=True)
     except Exception as e:
+        # unlock the runner
+        pb.collection(PB_COLLECTION_IMAGE).update(to_upscale_record.id,body_params={
+            "runner": ""
+        })
         print(e)
+        return
         
     pb.collection(PB_COLLECTION_IMAGE).update(to_upscale_record.id,{
         'image':''
