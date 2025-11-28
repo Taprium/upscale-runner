@@ -24,6 +24,7 @@ def upscale():
         })
     except:
         # if no record found, will throw exception, and exit
+        print("Found 0 images to upscale, quitting")
         do_upscale = False
         return
 
@@ -75,7 +76,7 @@ if __name__ == '__main__':
         try:
             upscale()
         except:
-            exit()
+            pass
     
     lock.release()
     
