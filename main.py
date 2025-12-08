@@ -35,6 +35,9 @@ def upscale():
     
     settings_record = pb.collection(PB_COLLECTION_SETTINGS).get_first_list_item('')
     queue_record = to_upscale_record.expand['queue']
+    upscale_times = queue_record.upscale_times
+    if queue_record.upscale_times==0:
+        upscale_times = settings_record.upscale_times # type: ignore
     
     file_url = '{pb_host}/api/files/generated_images/{id}/{file}'.format(pb_host=pb.base_url,id=to_upscale_record.id,file=to_upscale_record.image)
     origin_file = 'to-upscale.png'
@@ -43,7 +46,7 @@ def upscale():
     try:
         subprocess.run([
             "./realesrgan-ncnn-vulkan", 
-            "-s", str(queue_record.upscale_times),
+            "-s", str(upscale_times),
             "-n", settings_record.upscale_model,
             "-i", origin_file, 
             "-o", upscaled_file_name
