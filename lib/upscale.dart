@@ -1,0 +1,120 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
+import 'package:pocketbase/pocketbase.dart';
+import 'package:taprium_upscale_runner/taprium_pb.dart';
+
+Future upscale() async {
+  final tapriumPb = GetIt.instance.get<PocketBase>();
+
+  RecordModel toUpscaleRecord;
+  try {
+    toUpscaleRecord = await tapriumPb
+        .collection(tapriumCollectionImage)
+        .getFirstListItem(
+          'selected=true && upscaled=false && runner=""',
+          query: {'sort': '@random'},
+          expand: 'queue',
+        );
+  } catch (e) {
+    throw Exception("Found 0 image to upscale");
+  }
+
+  // lock the runner
+  try {
+    await tapriumPb
+        .collection(tapriumCollectionImage)
+        .update(
+          toUpscaleRecord.id,
+          body: {"runner": tapriumPb.authStore.record!.id},
+        );
+  } catch (e) {
+    throw Exception("Lock upscale job failed, getting new upscale job: $e");
+  }
+
+  final settingsRecord = await tapriumPb
+      .collection(tapriumCollectionSetttings)
+      .getFirstListItem('');
+
+  final queueRecord = toUpscaleRecord.get<RecordModel>('expand.queue');
+
+  int upscaleTimes = queueRecord.getIntValue('upscale_times');
+  if (upscaleTimes == 0) {
+    upscaleTimes = settingsRecord.getIntValue('upscale_times');
+  }
+
+  final originFileName = toUpscaleRecord.getStringValue('image');
+  final fileUrl = tapriumPb.files.getUrl(
+    toUpscaleRecord,
+    originFileName,
+    token: await tapriumPb.files.getToken(),
+    download: true,
+  );
+
+  final response = await http.get(fileUrl);
+
+  if (response.statusCode != 200) {
+    await tapriumPb
+        .collection(tapriumCollectionImage)
+        .update(toUpscaleRecord.id, body: {"runner": ""});
+    throw Exception("Failed to download image from taprium to upscale");
+  }
+
+  final originFile = File(originFileName);
+  await originFile.writeAsBytes(response.bodyBytes);
+
+  final upscaledFileName = 'upscaled-$originFileName';
+
+  try {
+    var process = await Process.start('./realesrgan-ncnn-vulkan', [
+      //
+      '-s', upscaleTimes.toString(),
+      //
+      '-n', settingsRecord.getStringValue('upscale_model'),
+      //
+      '-i', originFileName,
+      //
+      '-o', upscaledFileName,
+      //
+    ], runInShell: true);
+
+    // 2. Stream stdout (Standard Output)
+    process.stdout
+        .transform(utf8.decoder) // Convert bytes to UTF-8 strings
+        .listen((data) {
+          stdout.write(data); // Print to console in real-time
+        });
+
+    // 3. Stream stderr (Standard Error)
+    process.stderr.transform(utf8.decoder).listen((data) {
+      stderr.write(data); // Print errors in real-time
+    });
+
+    throwIf(
+      await process.exitCode != 0,
+      Exception('Failed to execute upscale'),
+    );
+    throwIf(
+      originFile.lengthSync() == File(upscaledFileName).lengthSync(),
+      Exception("Failed to upscale image"),
+    );
+  } catch (e) {
+    await tapriumPb
+        .collection(tapriumCollectionImage)
+        .update(toUpscaleRecord.id, body: {"runner": ""});
+    rethrow;
+  }
+
+  await tapriumPb
+      .collection(tapriumCollectionImage)
+      .update(
+        toUpscaleRecord.id,
+        body: {"upscaled": true},
+        files: [await http.MultipartFile.fromPath('image', upscaledFileName)],
+      );
+
+  await File(upscaledFileName).delete();
+  await originFile.delete();
+}

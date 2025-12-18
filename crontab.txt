@@ -1,0 +1,1 @@
+* * * * * cd /app && python main.py >> /var/log/taprium-upscale-runner.log 2>&1
