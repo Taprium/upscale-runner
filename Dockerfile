@@ -1,15 +1,8 @@
 FROM alpine:latest AS prep
 
-RUN apk add --no-cache wget unzip && \
-    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing dart-sdk
+RUN apk add --no-cache wget unzip 
 
-WORKDIR /src
-
-COPY . .
-
-RUN dart pub get 
-RUN dart compile exe bin/taprium_upscale_runner.dart -o bin/app
-
+WORKDIR /realesrgan
 # download models
 RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip && \
     unzip realesrgan-ncnn-vulkan-20220424-ubuntu.zip && rm *.mp4 *.jpg realesrgan*
@@ -25,7 +18,15 @@ RUN if [ "$TARGETARCH" == "amd64" ]; then \
         wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm32 -O realesrgan-ncnn-vulkan; \
     fi
 
+# Compile dart code
+WORKDIR /src
 
+RUN apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing dart-sdk
+COPY . .
+
+RUN touch .env && \
+    dart run build_runner build --delete-conflicting-outputs &&\
+    dart compile exe bin/taprium_upscale_runner.dart -o bin/taprium-upscale-runner
 
 FROM alpine:latest
 
@@ -36,11 +37,11 @@ RUN apk update && \
     apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add --no-cache &&\
     rm -rf /var/cache/apk/*
 
-COPY --from=prep /src/bin/app ./
 COPY crontab.txt *.py *.sh ./
-COPY --from=prep /src/realesrgan-ncnn-vulkan ./
-COPY --from=prep /src/models/* ./models/
+COPY --from=prep /src/bin/taprium-upscale-runner ./
+COPY --from=prep /realesrgan/realesrgan-ncnn-vulkan ./
+COPY --from=prep /realesrgan/models/* ./models/
 
-RUN crontab crontab.txt && touch /var/log/taprium-upscale-runner.log && rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan
+RUN crontab crontab.txt && touch /var/log/taprium-upscale-runner.log && rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan && chmod +x /app/taprium-upscale-runner
 
 CMD [ "sh", "entrypoint.sh"]
