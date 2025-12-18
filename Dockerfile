@@ -35,7 +35,7 @@ RUN apk update && \
     apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add --no-cache &&\
     rm -rf /var/cache/apk/*
 
-COPY --from prep /src/bin/app ./
+COPY --from=prep /src/bin/app ./
 COPY crontab.txt *.py *.sh ./
 COPY --from=prep /src/realesrgan-ncnn-vulkan ./
 COPY --from=prep /src/models/* ./models/
