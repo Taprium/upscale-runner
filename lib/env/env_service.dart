@@ -4,7 +4,7 @@ import 'package:taprium_upscale_runner/env/env.dart';
 
 class EnvironmentService {
   static String get tapriumAddr {
-    return Platform.environment['TAPRIUIM_ADDR'] ?? Env.tapriumAddr ?? '';
+    return Platform.environment['TAPRIUM_ADDR'] ?? Env.tapriumAddr ?? '';
   }
 
   static String get tapriumUser {
