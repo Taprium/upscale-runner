@@ -37,4 +37,4 @@ jobs:
           # The single tag that will contain the manifest list
           tags: ghcr.io/taprium/upscale-runner:${{ github.ref_name }} 
           # Specify all desired architectures
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64

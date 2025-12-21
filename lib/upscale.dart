@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
+import 'package:taprium_upscale_runner/log.dart';
 import 'package:taprium_upscale_runner/taprium_pb.dart';
 
 Future upscale() async {
@@ -29,6 +30,7 @@ Future upscale() async {
         .update(
           toUpscaleRecord.id,
           body: {"runner": tapriumPb.authStore.record!.id},
+          query: {"filter": 'selected=true && upscaled=false && runner=""'},
         );
   } catch (e) {
     throw Exception("Lock upscale job failed, getting new upscale job: $e");
@@ -67,18 +69,28 @@ Future upscale() async {
 
   final upscaledFileName = 'upscaled-$originFileName';
 
+  final args = [
+    //
+    '-s', upscaleTimes.toString(),
+    //
+    '-n', settingsRecord.getStringValue('upscale_model'),
+    //
+    '-i', originFileName,
+    //
+    '-o', upscaledFileName,
+    //
+  ];
+
   try {
-    var process = await Process.start('./realesrgan-ncnn-vulkan', [
-      //
-      '-s', upscaleTimes.toString(),
-      //
-      '-n', settingsRecord.getStringValue('upscale_model'),
-      //
-      '-i', originFileName,
-      //
-      '-o', upscaledFileName,
-      //
-    ], runInShell: true);
+    var process = await Process.start(
+      './realesrgan-ncnn-vulkan',
+      args,
+      runInShell: true,
+    );
+
+    logger.i(
+      "Executing command: \n./realesrgan-ncnn-vulkan ${args.join(' ')}",
+    );
 
     // 2. Stream stdout (Standard Output)
     process.stdout

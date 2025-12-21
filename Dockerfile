@@ -14,9 +14,13 @@ RUN if [ "$TARGETARCH" == "amd64" ]; then \
         wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-x64 -O realesrgan-ncnn-vulkan; \
     elif [ "$TARGETARCH" == "arm64" ]; then \
         wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm64 -O realesrgan-ncnn-vulkan; \
-    elif [ "$TARGETARCH" == "arm" ]; then \
-        wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-arm32 -O realesrgan-ncnn-vulkan; \
     fi
+    
+# elif [ "$TARGETARCH" == "armv7" ]; then \
+#     wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-armv7 -O realesrgan-ncnn-vulkan; \
+# elif [ "$TARGETARCH" == "armv6" ]; then \
+#     wget https://github.com/Taprium/Real-ESRGAN-ncnn-vulkan-alpine/releases/download/v0.0.1/realesrgan-ncnn-vulkan-alpine-armv6 -O realesrgan-ncnn-vulkan; \
+# fi
 
 # Compile dart code
 WORKDIR /src
