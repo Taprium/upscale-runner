@@ -5,6 +5,7 @@
 .env
 realesrgan-ncnn-vulkan
 models/
+*.jpg
 *.png
 lib/env/env.g.dart
 

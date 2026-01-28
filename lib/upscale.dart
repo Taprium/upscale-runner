@@ -7,21 +7,26 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:taprium_upscale_runner/log.dart';
 import 'package:taprium_upscale_runner/taprium_pb.dart';
 
-Future upscale() async {
+Future upscaleLeftOverCheck() async {
   final tapriumPb = GetIt.instance.get<PocketBase>();
 
-  RecordModel toUpscaleRecord;
-  try {
-    toUpscaleRecord = await tapriumPb
-        .collection(tapriumCollectionImage)
-        .getFirstListItem(
-          'selected=true && upscaled=false && runner=""',
-          query: {'sort': '@random'},
-          expand: 'queue',
-        );
-  } catch (e) {
-    throw Exception("Found 0 image to upscale");
+  final toUpscaleRecords = await tapriumPb
+      .collection(tapriumCollectionImage)
+      .getFullList(
+        filter:
+            'selected=true && upscaled=false && (runner="" || runner="${tapriumPb.authStore.record!.id}")',
+        expand: 'queue',
+      );
+
+  for (var i in toUpscaleRecords) {
+    try {
+      await upscaleSingle(i);
+    } catch (_) {}
   }
+}
+
+Future upscaleSingle(RecordModel toUpscaleRecord) async {
+  final tapriumPb = GetIt.instance.get<PocketBase>();
 
   // lock the runner
   try {
@@ -88,9 +93,7 @@ Future upscale() async {
       runInShell: true,
     );
 
-    logger.i(
-      "Executing command: \n./realesrgan-ncnn-vulkan ${args.join(' ')}",
-    );
+    logger.i("Executing command: \n./realesrgan-ncnn-vulkan ${args.join(' ')}");
 
     // 2. Stream stdout (Standard Output)
     process.stdout
@@ -129,4 +132,6 @@ Future upscale() async {
 
   await File(upscaledFileName).delete();
   await originFile.delete();
+
+  logger.i("Upscale [${toUpscaleRecord.id}] finished");
 }

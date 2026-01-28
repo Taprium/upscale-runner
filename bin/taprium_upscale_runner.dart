@@ -1,22 +1,13 @@
-import 'dart:io';
+import 'dart:async';
 
+import 'package:cron/cron.dart';
+import 'package:get_it/get_it.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:taprium_upscale_runner/log.dart';
 import 'package:taprium_upscale_runner/taprium_pb.dart';
 import 'package:taprium_upscale_runner/upscale.dart';
 
 void main(List<String> arguments) async {
-  final file = File('/var/lock/upscale.lock');
-  RandomAccessFile raf = await file.open(mode: FileMode.write);
-
-  try {
-    await raf.lock();
-    await raf.writeString('Locked content written at ${DateTime.now()}');
-    logger.i('File locked successfully.');
-  } catch (e) {
-    logger.f('Failed to lock file: $e');
-    return;
-  }
-
   try {
     await trySignIn();
   } catch (e) {
@@ -24,17 +15,52 @@ void main(List<String> arguments) async {
     return;
   }
 
-  var doUpscale = true;
-  while (doUpscale) {
-    try {
-      await upscale();
-    } catch (e) {
-      logger.w(e);
-      doUpscale = false;
-    }
-  }
+  final pocketbase = GetIt.instance.get<PocketBase>();
+  final cron = Cron();
+  cron.schedule(Schedule.parse("0 0 * * *"), () async {
+    await pocketbase.collection(tapriumCollectionUpscaleRunners).authRefresh();
+  });
+  logger.i("Cron job scheduled");
 
-  await raf.unlock();
-  await raf.close();
-  logger.i('File unlocked and closed.');
+  Future<void>? activeUpscale;
+
+  await pocketbase.collection(tapriumCollectionImage).subscribe("*", (e) async {
+    if (e.action != 'update') return;
+    final r = e.record!;
+
+    // Validation logic
+    if (r.getBoolValue('selected') &&
+        !r.getBoolValue('upscaled') &&
+        r.getStringValue('runner').isEmpty) {
+      // Capture the "current" tail of the queue
+      final previousTask = activeUpscale;
+
+      // Create a new future that represents this task being finished
+      // We assign it immediately so the NEXT event has to wait for US
+      final Completer<void> completer = Completer<void>();
+      activeUpscale = completer.future;
+
+      try {
+        // If there was a previous task, wait for it to finish first
+        if (previousTask != null) {
+          await previousTask;
+        }
+
+        // Now it's our turn!
+        await upscaleSingle(r);
+      } catch (err) {
+        logger.e("Upscale failed", error: err);
+      } finally {
+        // Signal that we are done so the next person in line can start
+        completer.complete();
+      }
+    }
+  });
+  logger.i("Subscribed to image collection");
+
+  await upscaleLeftOverCheck();
+  logger.i("Upscale left over check complete");
+
+  final keepAlive = Completer<void>();
+  await keepAlive.future;
 }
