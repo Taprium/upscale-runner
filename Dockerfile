@@ -44,11 +44,11 @@ RUN apk update && \
     apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add --no-cache &&\
     rm -rf /var/cache/apk/*
 
-COPY crontab.txt *.sh ./
 COPY --from=prep /src/bin/taprium-upscale-runner ./
 COPY --from=prep /realesrgan/realesrgan-ncnn-vulkan ./
 COPY --from=prep /realesrgan/models/* ./models/
 
-RUN crontab crontab.txt && touch /var/log/taprium-upscale-runner.log && rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan && chmod +x /app/taprium-upscale-runner
+RUN chmod +x /app/realesrgan-ncnn-vulkan && chmod +x /app/taprium-upscale-runner
 
-CMD [ "sh", "entrypoint.sh"]
+# CMD [ "sh", "entrypoint.sh"]
+ENTRYPOINT ["/app/taprium-upscale-runner"]
