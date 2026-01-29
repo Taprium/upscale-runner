@@ -61,6 +61,30 @@ void main(List<String> arguments) async {
   await upscaleLeftOverCheck();
   logger.i("Upscale left over check complete");
 
+  bool isSyncing = false;
+  pocketbase.realtime.subscribe("PB_CONNECT", (e) async {
+    logger.i("Server reconnected, checking left over works");
+
+    // 1. THE LOCK: If we are already syncing, ignore this event.
+    if (isSyncing) {
+      print('⏳ Sync already in progress... ignoring duplicate PB_CONNECT.');
+      return;
+    }
+
+    isSyncing = true;
+
+    try {
+      print('🔄 Reconnected! Running left-over check...');
+      await upscaleLeftOverCheck();
+    } catch (err) {
+      print('❌ Sync failed: $err');
+    } finally {
+      // 2. THE RELEASE: Always reset the flag, even if the check fails.
+      isSyncing = false;
+      print('✅ Sync lock released.');
+    }
+  });
+
   final keepAlive = Completer<void>();
   await keepAlive.future;
 }
