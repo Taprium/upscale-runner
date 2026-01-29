@@ -10,5 +10,9 @@ class ReleaseLogFilter extends LogFilter {
 
 final logger = Logger(
   filter: ReleaseLogFilter(),
-  printer: PrettyPrinter(dateTimeFormat: DateTimeFormat.dateAndTime),
+  printer: PrettyPrinter(
+    dateTimeFormat: DateTimeFormat.dateAndTime,
+    methodCount: 0,
+    noBoxingByDefault: true,
+  ),
 );
