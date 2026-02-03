@@ -28,6 +28,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/taprium/upscale-runner
+          tags: |
+            # Always produce a nightly tag
+            type=raw,value=nightly
+            # Produce 'master' tag only when a git tag is pushed
+            type=raw,value=master,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+
       # 4. Build, push, and create the manifest list for all platforms
       - name: Build and Push Multi-Arch Image
         uses: docker/build-push-action@v5
@@ -35,6 +46,8 @@ jobs:
           context: . 
           push: true
           # The single tag that will contain the manifest list
-          tags: ghcr.io/taprium/upscale-runner:${{ github.ref_name }} 
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          
           # Specify all desired architectures
           platforms: linux/amd64,linux/arm64
