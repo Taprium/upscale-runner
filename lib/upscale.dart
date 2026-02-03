@@ -127,7 +127,7 @@ Future upscaleSingle(RecordModel toUpscaleRecord) async {
       .update(
         toUpscaleRecord.id,
         body: {"upscaled": true},
-        files: [await http.MultipartFile.fromPath('image', upscaledFileName)],
+        files: [await http.MultipartFile.fromPath('upscaled_image', upscaledFileName)],
       );
 
   await File(upscaledFileName).delete();
